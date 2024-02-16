@@ -86,6 +86,7 @@ public class UniqueIpCounter {
                 reader.skip(start);
                 String line;
                 while (bytesRead < end && (line = reader.readLine()) != null) {
+                    bytesRead += line.getBytes().length + 1;
                     processingLineFunction.accept(line);
                 }
             } catch (Exception e) {
