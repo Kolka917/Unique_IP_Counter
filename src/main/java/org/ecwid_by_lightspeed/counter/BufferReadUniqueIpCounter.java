@@ -46,7 +46,9 @@ public class BufferReadUniqueIpCounter extends UniqueIpCounter {
 
     private static Runnable createReadTask(String zipFileStr, String zipEntryStr, int numThreads, int threadIndex, Consumer<String> processingLineFunction) {
         return () -> {
-            try (FileSystem zipFileSys = FileSystems.newFileSystem(Paths.get(zipFileStr)); InputStream inputStream = Files.newInputStream(zipFileSys.getPath(zipEntryStr)); BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+            try (FileSystem zipFileSys = FileSystems.newFileSystem(Paths.get(zipFileStr));
+                 InputStream inputStream = Files.newInputStream(zipFileSys.getPath(zipEntryStr));
+                 BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
 
                 long fileSize = Files.size(zipFileSys.getPath(zipEntryStr));
                 long portionSize = fileSize / numThreads;
