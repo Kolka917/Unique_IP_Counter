@@ -1,6 +1,12 @@
 package org.ecwid_by_lightspeed;
 
+import org.ecwid_by_lightspeed.counter.BufferReadUniqueIpCounter;
+import org.ecwid_by_lightspeed.counter.StreamUniqueIpCounter;
 import org.ecwid_by_lightspeed.counter.UniqueIpCounter;
+
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 
 /**
  * Счетчик уникальных IP-адресов в указанном файле
@@ -11,28 +17,37 @@ public class MainApp {
 
 
     public static void main(String[] args) {
-        readByStreamApi();
-        readByBufferedReader();
+        runCount(new StreamUniqueIpCounter(), "StreamResult");
+        runCount(new BufferReadUniqueIpCounter(), "BRResult");
     }
 
-    private static void readByStreamApi() {
-        var uniqueIpCounter = new UniqueIpCounter();
-        var startMsStream = System.currentTimeMillis();
-        var uniqueIpCountStream = uniqueIpCounter.countByStreamApi(ZIP_FILE_PATH, ZIP_ENTRY_NAME);
-        var endMsStream = System.currentTimeMillis();
-        System.out.printf("Stream API. Уникальных IP адресов: %s, время обработки: %s сек%n",
-                uniqueIpCountStream,
-                (endMsStream - startMsStream) / 1000);
+    /**
+     * Запуск подсчета
+     *
+     * @param uniqueIpCounter Счетчик уникальных IP адресов
+     * @param fileName        Название файла
+     */
+    private static void runCount(UniqueIpCounter uniqueIpCounter, String fileName) {
+        var startMs = System.currentTimeMillis();
+        var uniqueIpCountStream = uniqueIpCounter.count(ZIP_FILE_PATH, ZIP_ENTRY_NAME);
+        var endMs = System.currentTimeMillis();
+        writeResult(fileName, uniqueIpCountStream, startMs, endMs);
     }
 
-    private static void readByBufferedReader() {
-        var uniqueIpCounter = new UniqueIpCounter();
-        var startMsBR = System.currentTimeMillis();
-        int numThreads = 4;
-        var uniqueIpCountBR = uniqueIpCounter.countByBufferedReader(ZIP_FILE_PATH, ZIP_ENTRY_NAME, numThreads, true);
-        var endMsBR = System.currentTimeMillis();
-        System.out.printf("BufferedReader. Уникальных IP адресов: %s, время обработки: %s сек%n",
-                uniqueIpCountBR,
-                (endMsBR - startMsBR) / 1000);
+    /**
+     * Запись результата в файл
+     *
+     * @param fileName      Название файла
+     * @param uniqueIpCount Число уникальных IP адресов
+     * @param startMs       Временная метка начала процесса обработки
+     * @param endMs         Временная метка конца процесса обработки
+     */
+    private static void writeResult(String fileName, long uniqueIpCount, long startMs, long endMs) {
+        String filePath = String.format("src/main/resources/%s.txt", fileName);
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
+            writer.write(String.format("Уникальных IP адресов: %s, время обработки: %s сек", uniqueIpCount, (endMs - startMs) / 1000));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
