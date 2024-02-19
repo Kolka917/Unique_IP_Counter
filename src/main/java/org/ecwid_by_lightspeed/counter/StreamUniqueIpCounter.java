@@ -2,11 +2,14 @@ package org.ecwid_by_lightspeed.counter;
 
 import org.ecwid_by_lightspeed.helper.CustomBitSetHelper;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.stream.IntStream;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
 /**
  * Счетчик уникальных IP-адресов (реализация через Stream API)
@@ -19,9 +22,16 @@ public class StreamUniqueIpCounter extends UniqueIpCounter {
     @Override
     public long count(String zipFileStr, String zipEntryStr) {
         var customBitSet = new CustomBitSetHelper();
+        Function<String, Integer> mapToHashFunc = (line) -> {
+            try {
+                return InetAddress.getByName(line).hashCode();
+            } catch (UnknownHostException e) {
+                throw new RuntimeException("Invalid IPv4 address");
+            }
+        };
         try (FileSystem zipFileSys = FileSystems.newFileSystem(Paths.get(zipFileStr));
-             IntStream intStream = Files.lines(zipFileSys.getPath(zipEntryStr)).mapToInt(String::hashCode).parallel()) {
-            return intStream.filter(hc -> !customBitSet.isSet(hc)).peek(customBitSet::set).count();
+             Stream<String> stream = Files.lines(zipFileSys.getPath(zipEntryStr)).parallel()) {
+            return stream.mapToInt(mapToHashFunc::apply).filter(hc -> !customBitSet.isSet(hc)).peek(customBitSet::set).count();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

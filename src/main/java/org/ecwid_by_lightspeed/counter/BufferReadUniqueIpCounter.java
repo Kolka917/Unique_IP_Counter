@@ -5,6 +5,8 @@ import org.ecwid_by_lightspeed.helper.CustomBitSetHelper;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -26,9 +28,15 @@ public class BufferReadUniqueIpCounter extends UniqueIpCounter {
     public long count(String zipFileStr, String zipEntryStr) {
         try {
             var customBitSet = new CustomBitSetHelper();
-            int numThreads = 8;
+            int numThreads = Runtime.getRuntime().availableProcessors();
             ExecutorService executorService = Executors.newFixedThreadPool(numThreads);
-            Consumer<String> processingLineFunction = (line) -> customBitSet.set(line.hashCode());
+            Consumer<String> processingLineFunction = (line) -> {
+                try {
+                    customBitSet.set(InetAddress.getByName(line).hashCode());
+                } catch (UnknownHostException e) {
+                    throw new RuntimeException("Invalid IPv4 address");
+                }
+            };
 
             for (int i = 0; i < numThreads; i++) {
                 Runnable task = createReadTask(zipFileStr, zipEntryStr, numThreads, i, processingLineFunction);
