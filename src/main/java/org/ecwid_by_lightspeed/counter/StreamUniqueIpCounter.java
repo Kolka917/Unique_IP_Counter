@@ -22,7 +22,7 @@ public class StreamUniqueIpCounter extends UniqueIpCounter {
     @Override
     public long count(String zipFileStr, String zipEntryStr) {
         var customBitSet = new CustomBitSetHelper();
-        ToIntFunction<String> mapToHashFunc = (line) -> {
+        ToIntFunction<String> mapToHashFunc = line -> {
             try {
                 return InetAddress.getByName(line).hashCode();
             } catch (UnknownHostException e) {
@@ -31,7 +31,7 @@ public class StreamUniqueIpCounter extends UniqueIpCounter {
         };
         try (FileSystem zipFileSys = FileSystems.newFileSystem(Paths.get(zipFileStr));
              Stream<String> stream = Files.lines(zipFileSys.getPath(zipEntryStr)).parallel()) {
-            return stream.mapToInt(mapToHashFunc::applyAsInt).filter(hc -> !customBitSet.isSet(hc)).peek(customBitSet::set).count();
+            return stream.mapToInt(mapToHashFunc).filter(hc -> !customBitSet.isSet(hc)).peek(customBitSet::set).count();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

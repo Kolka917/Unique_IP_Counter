@@ -30,7 +30,7 @@ public class BufferReadUniqueIpCounter extends UniqueIpCounter {
             var customBitSet = new CustomBitSetHelper();
             int numThreads = Runtime.getRuntime().availableProcessors();
             ExecutorService executorService = Executors.newFixedThreadPool(numThreads);
-            Consumer<String> processingLineFunction = (line) -> {
+            Consumer<String> processingLineFunction = line -> {
                 try {
                     customBitSet.set(InetAddress.getByName(line).hashCode());
                 } catch (UnknownHostException e) {
